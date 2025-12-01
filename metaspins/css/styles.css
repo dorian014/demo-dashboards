@@ -295,7 +295,9 @@ body {
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: var(--spacing-lg);
+    gap: var(--spacing-xl);
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .stat-card {
