@@ -1,17 +1,17 @@
-/* Spartans Dashboard - Dark Theme */
+/* Superbetin Dashboard - Teal Theme */
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700;800;900&display=swap');
 
-/* CSS Variables - Metaspins Theme */
+/* CSS Variables - Superbetin Theme (Light) */
 :root {
-    --bg-primary: #0d1117;
-    --bg-secondary: #161b22;
-    --bg-card: rgba(22, 27, 34, 0.8);
-    --text-primary: #ffffff;
-    --text-secondary: #8b949e;
-    --text-muted: #6e7681;
-    --accent-primary: #00d26a;
-    --accent-secondary: #00a854;
-    --border-color: rgba(0, 210, 106, 0.2);
+    --bg-primary: #f0f4f8;
+    --bg-secondary: #e2e8f0;
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --accent-primary: #2563eb;
+    --accent-secondary: #00c8b8;
+    --border-color: rgba(37, 99, 235, 0.2);
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
@@ -57,7 +57,7 @@ body {
 .bg-circle-1 {
     width: 400px;
     height: 400px;
-    background: var(--accent-secondary);
+    background: rgba(37, 99, 235, 0.15);
     top: -100px;
     left: -100px;
     animation: float1 20s ease-in-out infinite;
@@ -66,7 +66,7 @@ body {
 .bg-circle-2 {
     width: 300px;
     height: 300px;
-    background: var(--accent-primary);
+    background: rgba(0, 200, 184, 0.15);
     bottom: -50px;
     right: -50px;
     animation: float2 25s ease-in-out infinite;
@@ -75,7 +75,7 @@ body {
 .bg-circle-3 {
     width: 250px;
     height: 250px;
-    background: var(--accent-secondary);
+    background: rgba(37, 99, 235, 0.1);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -107,8 +107,8 @@ body {
     position: absolute;
     inset: 0;
     background-image:
-        linear-gradient(rgba(0, 210, 106, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 210, 106, 0.03) 1px, transparent 1px);
+        linear-gradient(rgba(37, 99, 235, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(37, 99, 235, 0.03) 1px, transparent 1px);
     background-size: 50px 50px;
 }
 
@@ -134,9 +134,9 @@ body {
 
 /* Header */
 .dashboard-header {
-    background: rgba(10, 10, 10, 0.95);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(37, 99, 235, 0.2);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -154,7 +154,7 @@ body {
 }
 
 .header-logo {
-    height: 35px;
+    height: 60px;
     width: auto;
 }
 
@@ -185,7 +185,7 @@ body {
 
 .filter-group label {
     font-size: 0.7rem;
-    color: var(--text-muted);
+    color: #4b5563;
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -206,7 +206,7 @@ body {
 }
 
 .filter-btn:hover {
-    background: #00a854;
+    background: #1d4ed8;
 }
 
 .date-btn {
@@ -223,10 +223,10 @@ body {
     align-items: center;
     gap: var(--spacing-sm);
     padding: var(--spacing-sm) var(--spacing-md);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.05);
     border-radius: var(--radius-md);
     font-size: 0.8rem;
-    color: var(--text-secondary);
+    color: #4b5563;
 }
 
 .status-dot {
@@ -261,13 +261,13 @@ body {
 }
 
 .refresh-btn:hover {
-    background: rgba(0, 210, 106, 0.1);
+    background: rgba(37, 99, 235, 0.1);
 }
 
 .logout-btn {
     background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-secondary);
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    color: #4b5563;
 }
 
 .logout-btn:hover {
@@ -302,7 +302,7 @@ body {
 }
 
 .stat-card {
-    background: rgba(20, 20, 30, 0.6);
+    background: var(--bg-card);
     backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
@@ -311,6 +311,7 @@ body {
     align-items: flex-start;
     gap: var(--spacing-md);
     transition: all var(--transition-base);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .stat-card:hover {
@@ -348,21 +349,18 @@ body {
     color: var(--text-primary);
 }
 
-.highlight-card .stat-label {
-    color: var(--accent-primary);
-}
-
 /* Charts Section */
 .charts-section {
     margin-bottom: var(--spacing-xl);
 }
 
 .chart-container {
-    background: rgba(20, 20, 30, 0.6);
+    background: var(--bg-card);
     backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .chart-header {
@@ -420,6 +418,7 @@ body {
     padding: var(--spacing-xl) 0;
     border-top: 1px solid var(--border-color);
     margin-top: var(--spacing-xl);
+    background: var(--bg-card);
 }
 
 .footer-content {
