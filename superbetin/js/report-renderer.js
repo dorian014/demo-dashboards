@@ -155,8 +155,6 @@ function renderReport(data) {
     // Calculate totals for filtered data
     const totalPosts = filteredData.length;
     const totalImpressions = sumField(filteredData, 'Impressions/Views');
-    const totalLikes = sumField(filteredData, 'Likes');
-    const totalComments = sumField(filteredData, 'Comments/Replies');
 
     // Group by date for charts
     const chartData = groupByDate(filteredData, currentFilter);
@@ -198,7 +196,7 @@ function renderReport(data) {
         <!-- Report Body -->
         <div class="report-body">
             <!-- Stats Row -->
-            <div class="stats-row">
+            <div class="stats-row" style="grid-template-columns: repeat(2, 1fr);">
                 <div class="stat-card">
                     <div class="stat-value">${totalPosts.toLocaleString()}</div>
                     <div class="stat-label">Total Posts</div>
@@ -206,14 +204,6 @@ function renderReport(data) {
                 <div class="stat-card">
                     <div class="stat-value">${formatNumber(totalImpressions)}</div>
                     <div class="stat-label">Impressions</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${formatNumber(totalLikes)}</div>
-                    <div class="stat-label">Likes</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${formatNumber(totalComments)}</div>
-                    <div class="stat-label">Comments</div>
                 </div>
             </div>
 
