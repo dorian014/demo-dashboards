@@ -179,6 +179,49 @@ function showToast(message, type = 'success') {
     }, 4000);
 }
 
+// ============ CSV Generation ============
+
+function generateCSV(filteredData) {
+    const rows = ['"Created At","Post ID"'];
+    filteredData.forEach(post => {
+        const createdAt = (post['Created At'] || '').replace(/"/g, '""');
+        const postId = String(post['Post ID'] || '').replace(/"/g, '""');
+        rows.push(`"${createdAt}","${postId}"`);
+    });
+    return rows.join('\n');
+}
+
+function getCurrentFilteredData() {
+    const instagramData = reportData?.platforms?.instagram?.data || reportData?.instagram?.data || [];
+    const facebookData = reportData?.platforms?.facebook?.data || reportData?.facebook?.data || [];
+    const allData = [...instagramData, ...facebookData];
+    const filteredData = filterDataByRange(allData, currentFilter);
+
+    const totalPosts = filteredData.length;
+    const totalImpressions = sumField(filteredData, 'Impressions/Views');
+
+    const top5Posts = [...filteredData]
+        .sort((a, b) => parseNumber(b['Impressions/Views']) - parseNumber(a['Impressions/Views']))
+        .slice(0, 5);
+
+    // Calculate date range from filtered data
+    let dateRange = { start: '-', end: '-' };
+    if (filteredData.length > 0) {
+        const dates = filteredData
+            .map(p => parseDate(p['Created At']))
+            .filter(d => d !== null)
+            .sort((a, b) => a - b);
+        if (dates.length > 0) {
+            dateRange = {
+                start: getDateKey(dates[0]),
+                end: getDateKey(dates[dates.length - 1])
+            };
+        }
+    }
+
+    return { filteredData, top5Posts, totalPosts, totalImpressions, dateRange };
+}
+
 // ============ Email Modal ============
 
 function sendReport() {
@@ -251,6 +294,20 @@ async function confirmSendEmail() {
         const pdfBase64 = pdf.output('datauristring').split(',')[1];
         const today = new Date().toISOString().split('T')[0];
 
+        // Get filtered data and metrics for email
+        const { filteredData, top5Posts, totalPosts, totalImpressions, dateRange } = getCurrentFilteredData();
+
+        // Generate CSV
+        const csvContent = generateCSV(filteredData);
+        const csvBase64 = btoa(unescape(encodeURIComponent(csvContent)));
+
+        // Filter labels for email
+        const filterLabels = {
+            '7days': 'Past 7 Days',
+            'month': 'This Month',
+            'all': 'All Time'
+        };
+
         const response = await fetch(CLIENT_CONFIG.emailServiceUrl, {
             method: 'POST',
             body: JSON.stringify({
@@ -258,7 +315,16 @@ async function confirmSendEmail() {
                 pdfBase64: pdfBase64,
                 reportDate: today,
                 clientName: CLIENT_CONFIG.name,
-                reportType: CLIENT_CONFIG.reportType
+                reportType: CLIENT_CONFIG.reportType,
+                csvBase64: csvBase64,
+                filterLabel: filterLabels[currentFilter],
+                summaryMetrics: { totalPosts, totalImpressions, dateRange },
+                topPosts: top5Posts.map(p => ({
+                    agentName: p['Agent Name'] || p['Account Name'] || 'Unknown',
+                    platform: p['Platform'] || '-',
+                    impressions: parseNumber(p['Impressions/Views']),
+                    postUrl: fixInstagramUrl(p['Post URL']) || getPostUrl(p['Post ID'])
+                }))
             })
         });
 
