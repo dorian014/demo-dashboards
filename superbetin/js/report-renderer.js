@@ -72,44 +72,21 @@ function filterDataByRange(allData, range) {
 }
 
 /**
- * Group data by date
+ * Group data by date - only includes days with actual data
  */
-function groupByDate(data, range) {
+function groupByDate(data) {
     const grouped = {};
-    const now = new Date();
 
-    // Initialize all dates in range
-    if (range === '7days') {
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(now);
-            d.setDate(d.getDate() - i);
-            grouped[getDateKey(d)] = { posts: 0, impressions: 0 };
-        }
-    } else if (range === 'month') {
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        for (let d = new Date(startOfMonth); d <= now; d.setDate(d.getDate() + 1)) {
-            grouped[getDateKey(d)] = { posts: 0, impressions: 0 };
-        }
-    } else {
-        // For 'all', group by unique dates in data
-        data.forEach(item => {
-            const itemDate = parseDate(item['Created At']);
-            if (itemDate) {
-                const key = getDateKey(itemDate);
-                if (!grouped[key]) grouped[key] = { posts: 0, impressions: 0 };
-            }
-        });
-    }
-
-    // Populate with actual data
+    // Group by unique dates in data
     data.forEach(item => {
         const itemDate = parseDate(item['Created At']);
         if (itemDate) {
             const key = getDateKey(itemDate);
-            if (grouped[key]) {
-                grouped[key].posts++;
-                grouped[key].impressions += parseNumber(item['Impressions/Views']);
+            if (!grouped[key]) {
+                grouped[key] = { posts: 0, impressions: 0 };
             }
+            grouped[key].posts++;
+            grouped[key].impressions += parseNumber(item['Impressions/Views']);
         }
     });
 
@@ -117,7 +94,7 @@ function groupByDate(data, range) {
     const sortedKeys = Object.keys(grouped).sort();
     return {
         labels: sortedKeys.map(k => {
-            const d = new Date(k);
+            const d = new Date(k + 'T12:00:00');  // Add time to avoid timezone shift
             return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }),
         posts: sortedKeys.map(k => grouped[k].posts),
@@ -160,7 +137,7 @@ function renderReport(data) {
     const totalImpressions = sumField(filteredData, 'Impressions/Views');
 
     // Group by date for charts
-    const chartData = groupByDate(filteredData, currentFilter);
+    const chartData = groupByDate(filteredData);
 
     // Get top 5 posts by impressions from filtered data
     const top5Posts = [...filteredData]
