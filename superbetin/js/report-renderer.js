@@ -3,6 +3,13 @@
 
 let reportData = null;
 
+// Email configuration
+const EMAIL_CONFIG = {
+    // Replace with your Google Apps Script Web App URL after deployment
+    googleAppsScriptUrl: '', // TODO: Add your deployed URL here
+    defaultRecipient: '' // Optional: default email recipient
+};
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await loadAndRenderReport();
@@ -528,15 +535,16 @@ async function downloadPDF() {
     try {
         const paper = document.getElementById('reportPaper');
 
-        // Capture the report as an image
+        // Capture the report as an image (scale 1.5 for balance of quality/size)
         const canvas = await html2canvas(paper, {
-            scale: 2,
+            scale: 1.5,
             useCORS: true,
             logging: false,
             backgroundColor: '#ffffff'
         });
 
-        const imgData = canvas.toDataURL('image/png');
+        // Use JPEG with 70% quality for smaller file size
+        const imgData = canvas.toDataURL('image/jpeg', 0.7);
 
         // Calculate dimensions
         const { jsPDF } = window.jspdf;
@@ -555,14 +563,14 @@ async function downloadPDF() {
         let position = 0;
 
         // Add first page
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
 
         // Add additional pages if content is longer than one page
         while (heightLeft > 0) {
             position = heightLeft - imgHeight;
             pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
         }
 
@@ -675,6 +683,118 @@ function escapeHtml(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/**
+ * Send report via email
+ */
+async function sendReport() {
+    // Check if email service is configured
+    if (!EMAIL_CONFIG.googleAppsScriptUrl) {
+        alert('Email service not configured. Please set up Google Apps Script first.\nSee superbetin/google-apps-script.md for instructions.');
+        return;
+    }
+
+    // Prompt for email address
+    const recipientEmail = prompt('Enter recipient email address:', EMAIL_CONFIG.defaultRecipient);
+    if (!recipientEmail) {
+        return; // User cancelled
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recipientEmail)) {
+        alert('Please enter a valid email address.');
+        return;
+    }
+
+    const btn = document.getElementById('sendBtn');
+    btn.disabled = true;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinner-icon">
+        <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"></circle>
+    </svg><span>Sending...</span>`;
+
+    try {
+        const paper = document.getElementById('reportPaper');
+
+        // Generate PDF (scale 1.5 for balance of quality/size)
+        const canvas = await html2canvas(paper, {
+            scale: 1.5,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.7); // Use JPEG with 70% quality
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
+
+        // Convert PDF to base64
+        const pdfBase64 = pdf.output('datauristring').split(',')[1];
+
+        // Get report stats
+        const allData = [...(reportData.instagram?.data || []), ...(reportData.facebook?.data || [])];
+        const filteredData = filterDataByRange(allData, currentFilter);
+        const totalPosts = filteredData.length;
+        const totalImpressions = sumField(filteredData, 'Impressions/Views');
+        const today = new Date().toISOString().split('T')[0];
+
+        const filterLabels = {
+            '7days': 'Past 7 Days',
+            'month': 'This Month',
+            'all': 'All Time'
+        };
+
+        // Send to Google Apps Script
+        const response = await fetch(EMAIL_CONFIG.googleAppsScriptUrl, {
+            method: 'POST',
+            body: JSON.stringify({
+                recipientEmail: recipientEmail,
+                pdfBase64: pdfBase64,
+                reportDate: today,
+                filterRange: filterLabels[currentFilter] || 'All Time',
+                totalPosts: formatNumber(totalPosts),
+                totalImpressions: formatNumber(totalImpressions)
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            alert('Report sent successfully to ' + recipientEmail);
+        } else {
+            throw new Error(result.message || 'Failed to send email');
+        }
+
+    } catch (error) {
+        console.error('Email error:', error);
+        alert('Error sending email: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg><span>Send</span>`;
+    }
+}
+
 // Export
 window.refreshData = refreshData;
 window.downloadPDF = downloadPDF;
+window.sendReport = sendReport;
