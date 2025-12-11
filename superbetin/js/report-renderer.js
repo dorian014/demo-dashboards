@@ -221,7 +221,7 @@ function renderReport(data) {
                             <div class="top-post-rank">${index + 1}</div>
                             <div class="top-post-info">
                                 <div class="top-post-agent">${escapeHtml(post['Agent Name'] || post['Account Name'] || 'Unknown')} · ${escapeHtml(post['Platform'] || '-')}</div>
-                                <a href="${post['Post URL'] || getPostUrl(post['Post ID'])}" target="_blank" class="top-post-link">${escapeHtml(post['Post ID'] || 'No link')}</a>
+                                <a href="${fixInstagramUrl(post['Post URL']) || getPostUrl(post['Post ID'])}" target="_blank" class="top-post-link">${escapeHtml(post['Post ID'] || 'No link')}</a>
                             </div>
                             <div class="top-post-metrics">
                                 <div class="top-post-impressions">${formatNumber(post['Impressions/Views'])}</div>
@@ -602,6 +602,21 @@ async function downloadPDF() {
 }
 
 // Helpers
+
+// Fix Instagram URLs that use numeric IDs instead of shortcodes
+function fixInstagramUrl(url) {
+    if (!url) return null;
+
+    // Check if it's an Instagram URL with a numeric ID
+    const match = url.match(/instagram\.com\/(?:p|reel)\/(\d+)/);
+    if (match) {
+        const numericId = match[1];
+        const shortcode = instagramIdToShortcode(numericId);
+        return `https://www.instagram.com/reel/${shortcode}/`;
+    }
+
+    return url;
+}
 
 // Convert Instagram numeric ID to shortcode
 function instagramIdToShortcode(id) {
