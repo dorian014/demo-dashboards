@@ -516,6 +516,13 @@ async function downloadPDF() {
     btn.disabled = true;
 
     try {
+        // Check if data is available
+        if (!reportData || !reportData.platforms) {
+            alert('No data available. Please wait for data to load.');
+            btn.disabled = false;
+            return;
+        }
+
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
@@ -527,8 +534,8 @@ async function downloadPDF() {
         const textColor = [30, 41, 59];
         const lightGray = [100, 116, 139];
 
-        // Header - light background with blue accent
-        doc.setFillColor(255, 255, 255);
+        // Header - light gray background with blue accent
+        doc.setFillColor(248, 250, 252);
         doc.rect(0, 0, pageWidth, 35, 'F');
         doc.setFillColor(...primaryColor);
         doc.rect(0, 35, pageWidth, 1.5, 'F');
@@ -627,12 +634,12 @@ async function downloadPDF() {
             const agentText = `${post['Agent Name'] || 'Unknown'} · ${post['Platform'] || '-'}`;
             doc.text(agentText.substring(0, 40), margin + 18, y + 7);
 
-            // Post link
-            doc.setTextColor(...primaryColor);
+            // Post ID
+            doc.setTextColor(...lightGray);
             doc.setFontSize(7);
             doc.setFont('helvetica', 'normal');
-            const postLink = String(post['Post ID'] || 'No link').substring(0, 70);
-            doc.textWithLink(postLink, margin + 18, y + 13, { url: post['Post ID'] || '#' });
+            const postId = String(post['Post ID'] || 'No ID');
+            doc.text(`ID: ${postId.substring(0, 50)}`, margin + 18, y + 13);
 
             // Impressions
             doc.setTextColor(...primaryColor);
@@ -657,6 +664,9 @@ async function downloadPDF() {
         }
 
         doc.save(`Superbetin_Report_${today.toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        alert('Error generating PDF: ' + error.message);
     } finally {
         btn.disabled = false;
     }
