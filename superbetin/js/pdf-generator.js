@@ -1,168 +1,114 @@
-// Superbetin Dashboard - PDF Generator
-// Generates PDF reports using jsPDF and html2canvas
+// Superbetin Report Generator - PDF Generator
+// Generates PDF reports using jsPDF
+
+let reportData = null;
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadDataInfo();
+});
 
 /**
- * Export dashboard to PDF
+ * Load and display data info
  */
-async function exportToPDF() {
-    const { jsPDF } = window.jspdf;
-
-    // Show loading state
-    const exportBtn = document.querySelector('.export-btn');
-    const originalText = exportBtn.querySelector('span').textContent;
-    exportBtn.querySelector('span').textContent = 'Generating...';
-    exportBtn.disabled = true;
+async function loadDataInfo() {
+    const dataInfo = document.getElementById('dataInfo');
 
     try {
-        // Create new PDF document (A4 landscape for dashboard)
-        const doc = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
-        });
+        reportData = await DataLoader.loadData();
 
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const margin = 15;
+        if (reportData && reportData.platforms) {
+            const instagram = reportData.platforms.instagram?.count || 0;
+            const facebook = reportData.platforms.facebook?.count || 0;
+            const generated = reportData.generated || 'Unknown';
 
-        // Colors (matching Superbetin brand)
-        const primaryColor = [37, 99, 235];    // #2563eb
-        const accentColor = [0, 217, 196];     // #00d9c4
-        const textColor = [30, 41, 59];        // #1e293b
-        const lightGray = [100, 116, 139];     // #64748b
-
-        // ============ HEADER ============
-        // Logo placeholder (you can add actual logo using addImage)
-        doc.setFillColor(...primaryColor);
-        doc.rect(margin, margin, 40, 12, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('SUPERBETIN', margin + 3, margin + 8);
-
-        // Report title
-        doc.setTextColor(...textColor);
-        doc.setFontSize(20);
-        doc.text('Performance Analytics Report', margin + 50, margin + 8);
-
-        // Date
-        const today = new Date();
-        const dateStr = today.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        doc.setFontSize(10);
-        doc.setTextColor(...lightGray);
-        doc.text(dateStr, pageWidth - margin, margin + 8, { align: 'right' });
-
-        // Separator line
-        doc.setDrawColor(...primaryColor);
-        doc.setLineWidth(0.5);
-        doc.line(margin, margin + 18, pageWidth - margin, margin + 18);
-
-        // ============ STATS CARDS ============
-        const statsY = margin + 28;
-        const cardWidth = (pageWidth - margin * 2 - 20) / 3;
-        const cardHeight = 25;
-
-        // Get stats from DOM
-        const statCards = document.querySelectorAll('.stat-card');
-        const stats = [];
-        statCards.forEach(card => {
-            const label = card.querySelector('.stat-label')?.textContent || '';
-            const value = card.querySelector('.stat-value')?.textContent || '';
-            stats.push({ label, value });
-        });
-
-        // Draw stat cards
-        stats.forEach((stat, index) => {
-            const x = margin + (cardWidth + 10) * index;
-
-            // Card background
-            doc.setFillColor(248, 250, 252);
-            doc.roundedRect(x, statsY, cardWidth, cardHeight, 3, 3, 'F');
-
-            // Card border
-            doc.setDrawColor(...primaryColor);
-            doc.setLineWidth(0.3);
-            doc.roundedRect(x, statsY, cardWidth, cardHeight, 3, 3, 'S');
-
-            // Label
-            doc.setFontSize(9);
-            doc.setTextColor(...lightGray);
-            doc.setFont('helvetica', 'normal');
-            doc.text(stat.label, x + cardWidth / 2, statsY + 8, { align: 'center' });
-
-            // Value
-            doc.setFontSize(18);
-            doc.setTextColor(...primaryColor);
-            doc.setFont('helvetica', 'bold');
-            doc.text(stat.value, x + cardWidth / 2, statsY + 19, { align: 'center' });
-        });
-
-        // ============ CHART ============
-        const chartY = statsY + cardHeight + 15;
-        const chartHeight = pageHeight - chartY - margin - 20;
-
-        // Capture chart as image
-        const chartCanvas = document.getElementById('timelineChart');
-        if (chartCanvas) {
-            const chartImage = chartCanvas.toDataURL('image/png', 1.0);
-
-            // Chart container
-            doc.setFillColor(255, 255, 255);
-            doc.roundedRect(margin, chartY, pageWidth - margin * 2, chartHeight, 3, 3, 'F');
-            doc.setDrawColor(226, 232, 240);
-            doc.roundedRect(margin, chartY, pageWidth - margin * 2, chartHeight, 3, 3, 'S');
-
-            // Chart title
-            doc.setFontSize(12);
-            doc.setTextColor(...textColor);
-            doc.setFont('helvetica', 'bold');
-            doc.text('PERFORMANCE TIMELINE', margin + 5, chartY + 10);
-
-            // Add chart image
-            const imgWidth = pageWidth - margin * 2 - 10;
-            const imgHeight = chartHeight - 20;
-            doc.addImage(chartImage, 'PNG', margin + 5, chartY + 15, imgWidth, imgHeight);
+            dataInfo.innerHTML = `
+                <strong>Last updated:</strong> ${generated}<br>
+                <strong>Instagram/X:</strong> ${instagram} posts &nbsp;|&nbsp;
+                <strong>Facebook:</strong> ${facebook} posts
+            `;
+        } else {
+            dataInfo.innerHTML = '<span style="color: #dc2626;">No data available. Click Refresh to load data.</span>';
         }
-
-        // ============ FOOTER ============
-        doc.setFontSize(8);
-        doc.setTextColor(...lightGray);
-        doc.text(
-            'Generated by QStarLabs Dashboard',
-            pageWidth / 2,
-            pageHeight - 8,
-            { align: 'center' }
-        );
-
-        // ============ SAVE PDF ============
-        const filename = `Superbetin_Report_${today.toISOString().split('T')[0]}.pdf`;
-        doc.save(filename);
-
-        console.log('PDF exported:', filename);
-
     } catch (error) {
-        console.error('Error generating PDF:', error);
-        alert('Error generating PDF. Please try again.');
-    } finally {
-        // Restore button state
-        exportBtn.querySelector('span').textContent = originalText;
-        exportBtn.disabled = false;
+        console.error('Error loading data:', error);
+        dataInfo.innerHTML = '<span style="color: #dc2626;">Error loading data</span>';
     }
 }
 
 /**
- * Generate detailed PDF with platform breakdown
- * @param {string} platform - 'facebook', 'instagram', or 'all'
+ * Show status message
  */
-async function generateDetailedReport(platform = 'all') {
-    const { jsPDF } = window.jspdf;
+function showStatus(message, type = 'loading') {
+    const status = document.getElementById('status');
+    status.className = `status show ${type}`;
+    status.textContent = message;
 
-    // Load data
-    const data = await DataLoader.loadData();
+    if (type === 'success' || type === 'error') {
+        setTimeout(() => {
+            status.classList.remove('show');
+        }, 3000);
+    }
+}
+
+/**
+ * Refresh data from JSON files
+ */
+async function refreshData() {
+    const btn = document.getElementById('refreshBtn');
+    const originalHTML = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div><span>Refreshing...</span>';
+    showStatus('Refreshing data...', 'loading');
+
+    try {
+        // Clear cache and reload
+        DataLoader.clearCache();
+        await loadDataInfo();
+
+        showStatus('Data refreshed successfully!', 'success');
+    } catch (error) {
+        console.error('Error refreshing data:', error);
+        showStatus('Error refreshing data', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+}
+
+/**
+ * Download PDF report
+ */
+async function downloadReport() {
+    const btn = document.getElementById('downloadBtn');
+    const originalHTML = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div><span>Generating PDF...</span>';
+    showStatus('Generating PDF report...', 'loading');
+
+    try {
+        if (!reportData) {
+            reportData = await DataLoader.loadData();
+        }
+
+        await generatePDFReport(reportData);
+        showStatus('PDF downloaded successfully!', 'success');
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        showStatus('Error generating PDF', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+}
+
+/**
+ * Generate PDF report from data
+ */
+async function generatePDFReport(data) {
+    const { jsPDF } = window.jspdf;
 
     const doc = new jsPDF({
         orientation: 'portrait',
@@ -171,70 +117,227 @@ async function generateDetailedReport(platform = 'all') {
     });
 
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 20;
 
     // Colors
     const primaryColor = [37, 99, 235];
     const textColor = [30, 41, 59];
+    const lightGray = [100, 116, 139];
 
-    // Header
+    // ============ HEADER ============
     doc.setFillColor(...primaryColor);
-    doc.rect(0, 0, pageWidth, 35, 'F');
+    doc.rect(0, 0, pageWidth, 40, 'F');
 
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.text('SUPERBETIN', margin, 20);
+    doc.text('SUPERBETIN', margin, 22);
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
-    doc.text('Influencer Metrics Report', margin, 28);
+    doc.text('Influencer Performance Report', margin, 32);
 
-    // Report info
-    let y = 50;
-    doc.setTextColor(...textColor);
+    // Date
+    const today = new Date();
     doc.setFontSize(10);
-    doc.text(`Generated: ${data.generated || new Date().toISOString()}`, margin, y);
-    doc.text(`Platform: ${platform === 'all' ? 'All Platforms' : platform}`, margin, y + 6);
+    doc.text(today.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    }), pageWidth - margin, 28, { align: 'right' });
 
-    y += 20;
+    // ============ SUMMARY ============
+    let y = 55;
 
-    // Platform sections
-    const platforms = platform === 'all'
-        ? Object.keys(data.platforms || {})
-        : [platform];
+    doc.setTextColor(...textColor);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Summary', margin, y);
 
-    platforms.forEach(p => {
-        const platformData = data.platforms?.[p];
-        if (!platformData) return;
+    y += 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...lightGray);
 
-        // Platform header
+    const instagramData = data.platforms?.instagram?.data || [];
+    const facebookData = data.platforms?.facebook?.data || [];
+
+    // Calculate totals
+    const totalPosts = instagramData.length + facebookData.length;
+    const totalImpressions = [...instagramData, ...facebookData].reduce((sum, r) => {
+        const val = r['Impressions/Views'] || 0;
+        return sum + (typeof val === 'string' ? parseInt(val.replace(/,/g, '')) || 0 : val);
+    }, 0);
+    const totalLikes = [...instagramData, ...facebookData].reduce((sum, r) => {
+        const val = r['Likes'] || 0;
+        return sum + (typeof val === 'string' ? parseInt(val.replace(/,/g, '')) || 0 : val);
+    }, 0);
+    const totalComments = [...instagramData, ...facebookData].reduce((sum, r) => {
+        const val = r['Comments/Replies'] || 0;
+        return sum + (typeof val === 'string' ? parseInt(val.replace(/,/g, '')) || 0 : val);
+    }, 0);
+
+    // Summary boxes
+    const boxWidth = (pageWidth - margin * 2 - 15) / 4;
+    const boxHeight = 25;
+
+    const summaryItems = [
+        { label: 'Total Posts', value: totalPosts.toLocaleString() },
+        { label: 'Impressions', value: formatNumber(totalImpressions) },
+        { label: 'Likes', value: formatNumber(totalLikes) },
+        { label: 'Comments', value: formatNumber(totalComments) }
+    ];
+
+    summaryItems.forEach((item, i) => {
+        const x = margin + (boxWidth + 5) * i;
+
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(x, y, boxWidth, boxHeight, 2, 2, 'F');
+
+        doc.setFontSize(8);
+        doc.setTextColor(...lightGray);
+        doc.text(item.label, x + boxWidth / 2, y + 8, { align: 'center' });
+
         doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
         doc.setTextColor(...primaryColor);
-        doc.text(platformData.worksheet || p.toUpperCase(), margin, y);
-
-        doc.setFontSize(10);
-        doc.setTextColor(...textColor);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Records: ${platformData.count || 0}`, margin, y + 8);
-
-        y += 20;
-
-        // Add data table if records exist
-        if (platformData.data && platformData.data.length > 0) {
-            // Table headers would go here
-            // For now, just show count
-            doc.text(`Data rows: ${platformData.data.length}`, margin, y);
-            y += 15;
-        }
+        doc.setFont('helvetica', 'bold');
+        doc.text(item.value, x + boxWidth / 2, y + 19, { align: 'center' });
     });
 
+    y += boxHeight + 15;
+
+    // ============ INSTAGRAM/X DATA ============
+    if (instagramData.length > 0) {
+        y = addPlatformSection(doc, 'Instagram / X', instagramData, y, margin, pageWidth, pageHeight);
+    }
+
+    // ============ FACEBOOK DATA ============
+    if (facebookData.length > 0) {
+        // Check if we need a new page
+        if (y > pageHeight - 60) {
+            doc.addPage();
+            y = 20;
+        }
+        y = addPlatformSection(doc, 'Facebook', facebookData, y, margin, pageWidth, pageHeight);
+    }
+
+    // ============ FOOTER ============
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(...lightGray);
+        doc.text(
+            `Generated by QStarLabs | Page ${i} of ${pageCount}`,
+            pageWidth / 2,
+            pageHeight - 10,
+            { align: 'center' }
+        );
+    }
+
     // Save
-    const filename = `Superbetin_Detailed_${platform}_${new Date().toISOString().split('T')[0]}.pdf`;
+    const filename = `Superbetin_Report_${today.toISOString().split('T')[0]}.pdf`;
     doc.save(filename);
 }
 
-// Export for use
-window.exportToPDF = exportToPDF;
-window.generateDetailedReport = generateDetailedReport;
+/**
+ * Add platform section to PDF
+ */
+function addPlatformSection(doc, title, data, startY, margin, pageWidth, pageHeight) {
+    const primaryColor = [37, 99, 235];
+    const textColor = [30, 41, 59];
+    const lightGray = [100, 116, 139];
+
+    let y = startY;
+
+    // Section title
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text(`${title} (${data.length} posts)`, margin, y);
+
+    y += 8;
+
+    // Table header
+    const colWidths = [50, 30, 30, 30, 30];
+    const headers = ['Agent', 'Views', 'Likes', 'Shares', 'Comments'];
+
+    doc.setFillColor(248, 250, 252);
+    doc.rect(margin, y, pageWidth - margin * 2, 8, 'F');
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...textColor);
+
+    let x = margin + 2;
+    headers.forEach((header, i) => {
+        doc.text(header, x, y + 5.5);
+        x += colWidths[i];
+    });
+
+    y += 10;
+
+    // Table rows (all data, sorted by impressions)
+    const sortedData = [...data].sort((a, b) => {
+        const aVal = parseInt(String(a['Impressions/Views'] || 0).replace(/,/g, '')) || 0;
+        const bVal = parseInt(String(b['Impressions/Views'] || 0).replace(/,/g, '')) || 0;
+        return bVal - aVal;
+    });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+
+    sortedData.forEach((row, index) => {
+        // Check for page break
+        if (y > pageHeight - 25) {
+            doc.addPage();
+            y = 20;
+        }
+
+        // Alternate row background
+        if (index % 2 === 0) {
+            doc.setFillColor(252, 252, 253);
+            doc.rect(margin, y - 4, pageWidth - margin * 2, 7, 'F');
+        }
+
+        doc.setTextColor(...textColor);
+        x = margin + 2;
+
+        // Agent name (truncate if too long)
+        const agent = String(row['Agent Name'] || 'Unknown').substring(0, 20);
+        doc.text(agent, x, y);
+        x += colWidths[0];
+
+        // Metrics
+        doc.text(formatNumber(row['Impressions/Views']), x, y);
+        x += colWidths[1];
+
+        doc.text(formatNumber(row['Likes']), x, y);
+        x += colWidths[2];
+
+        doc.text(formatNumber(row['Shares/Retweets']), x, y);
+        x += colWidths[3];
+
+        doc.text(formatNumber(row['Comments/Replies']), x, y);
+
+        y += 7;
+    });
+
+    return y + 10;
+}
+
+/**
+ * Format number for display
+ */
+function formatNumber(value) {
+    if (!value) return '0';
+    const num = typeof value === 'string' ? parseInt(value.replace(/,/g, '')) || 0 : value;
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+}
+
+// Export functions
+window.downloadReport = downloadReport;
+window.refreshData = refreshData;

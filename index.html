@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Demo Dashboards - QStarLabs</title>
+    <link rel="icon" type="image/png" href="favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -72,12 +73,11 @@
         }
 
         .dashboard-card.metaspins {
-            border-color: rgba(0, 210, 106, 0.3);
+            border-color: rgba(107, 114, 128, 0.3);
         }
 
         .dashboard-card.metaspins:hover {
-            border-color: #00d26a;
-            box-shadow: 0 20px 40px rgba(0, 210, 106, 0.2);
+            border-color: rgba(107, 114, 128, 0.5);
         }
 
         .dashboard-card.superbetin {
@@ -87,6 +87,17 @@
         .dashboard-card.superbetin:hover {
             border-color: #2563eb;
             box-shadow: 0 20px 40px rgba(37, 99, 235, 0.2);
+        }
+
+        .dashboard-card.disabled {
+            opacity: 0.6;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+
+        .dashboard-card.disabled:hover {
+            transform: none;
+            box-shadow: none;
         }
 
         .logo-container {
@@ -132,8 +143,8 @@
         }
 
         .metaspins .card-status {
-            background: rgba(0, 210, 106, 0.15);
-            color: #00d26a;
+            background: rgba(107, 114, 128, 0.15);
+            color: #9ca3af;
         }
 
         .superbetin .card-status {
@@ -169,14 +180,14 @@
         <p class="subtitle">AI Micro-Influencer Performance Analytics</p>
 
         <div class="dashboards-grid">
-            <a href="metaspins/index.html" class="dashboard-card metaspins">
+            <a href="metaspins/index.html" class="dashboard-card metaspins disabled">
                 <div class="logo-container">
                     <img src="metaspins/assets/metaspins-logo.svg" alt="Metaspins" class="card-logo">
                 </div>
                 <div class="card-content">
                     <h2 class="card-title">Dashboard</h2>
                     <p class="card-desc">Turkish Market Analytics</p>
-                    <span class="card-status">Live</span>
+                    <span class="card-status">Coming Soon</span>
                 </div>
             </a>
 
@@ -185,8 +196,8 @@
                     <img src="superbetin/assets/logo2.png" alt="Superbetin" class="card-logo">
                 </div>
                 <div class="card-content">
-                    <h2 class="card-title">Dashboard</h2>
-                    <p class="card-desc">Turkish Market Analytics</p>
+                    <h2 class="card-title">Report Generator</h2>
+                    <p class="card-desc">Influencer Performance Reports</p>
                     <span class="card-status">Live</span>
                 </div>
             </a>
