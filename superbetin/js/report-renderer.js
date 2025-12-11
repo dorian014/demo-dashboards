@@ -221,7 +221,7 @@ function renderReport(data) {
                             <div class="top-post-rank">${index + 1}</div>
                             <div class="top-post-info">
                                 <div class="top-post-agent">${escapeHtml(post['Agent Name'] || post['Account Name'] || 'Unknown')} · ${escapeHtml(post['Platform'] || '-')}</div>
-                                <a href="${getPostUrl(post['Post ID'])}" target="_blank" class="top-post-link">${escapeHtml(post['Post ID'] || 'No link')}</a>
+                                <a href="${post['Post URL'] || getPostUrl(post['Post ID'])}" target="_blank" class="top-post-link">${escapeHtml(post['Post ID'] || 'No link')}</a>
                             </div>
                             <div class="top-post-metrics">
                                 <div class="top-post-impressions">${formatNumber(post['Impressions/Views'])}</div>
@@ -602,7 +602,20 @@ async function downloadPDF() {
 }
 
 // Helpers
-function getPostUrl(postId) {
+
+// Convert Instagram numeric ID to shortcode
+function instagramIdToShortcode(id) {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    let shortcode = '';
+    let num = BigInt(id);
+    while (num > 0) {
+        shortcode = alphabet[Number(num % 64n)] + shortcode;
+        num = num / 64n;
+    }
+    return shortcode;
+}
+
+function getPostUrl(postId, platform) {
     if (!postId) return '#';
     const id = String(postId);
 
@@ -618,7 +631,11 @@ function getPostUrl(postId) {
     if (id.includes('facebook.com') || id.includes('instagram.com') || id.includes('twitter.com') || id.includes('x.com')) {
         return 'https://' + id;
     }
-    // Otherwise return as-is (numeric IDs won't be clickable)
+    // If numeric and Instagram, convert to shortcode URL
+    if (/^\d+$/.test(id)) {
+        const shortcode = instagramIdToShortcode(id);
+        return `https://www.instagram.com/reel/${shortcode}/`;
+    }
     return '#';
 }
 
