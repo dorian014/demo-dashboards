@@ -184,8 +184,8 @@ function renderReport(data) {
                     </div>
                 </div>
             </div>
-            <h1 class="report-title">Influencer Performance Report</h1>
-            <p class="report-subtitle">AI Micro-Influencer Analytics</p>
+            <h1 class="report-title">AI Micro-influencer Report</h1>
+            <p class="report-subtitle">Performance Analytics</p>
         </div>
 
         <!-- Report Body -->
