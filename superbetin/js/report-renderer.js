@@ -457,7 +457,7 @@ async function refreshData() {
     // Check rate limit
     const refreshCheck = canRefresh();
     if (!refreshCheck.allowed) {
-        alert(`Please wait ${refreshCheck.remainingMinutes} more minute(s) before refreshing again.`);
+        showToast(`Please wait ${refreshCheck.remainingMinutes} more minute(s) before refreshing.`, 'error');
         return;
     }
 
@@ -600,7 +600,7 @@ async function downloadPDF() {
 
     } catch (error) {
         console.error('PDF generation error:', error);
-        alert('Error generating PDF: ' + error.message);
+        showToast('Error generating PDF: ' + error.message, 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -686,12 +686,29 @@ function escapeHtml(str) {
 }
 
 /**
+ * Show toast notification
+ */
+function showToast(message, type = 'success') {
+    const toast = document.getElementById('toast');
+    const toastMessage = document.getElementById('toastMessage');
+
+    toast.classList.remove('success', 'error');
+    toast.classList.add(type);
+    toastMessage.textContent = message;
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
+}
+
+/**
  * Open email modal
  */
 function sendReport() {
     // Check if email service is configured
     if (!EMAIL_CONFIG.googleAppsScriptUrl) {
-        alert('Email service not configured. Please set up Google Apps Script first.\nSee superbetin/google-apps-script.md for instructions.');
+        showToast('Email service not configured', 'error');
         return;
     }
 
@@ -797,14 +814,14 @@ async function confirmSendEmail() {
         const result = await response.json();
 
         if (result.success) {
-            alert('Report sent successfully to ' + recipientEmail);
+            showToast('Report sent successfully to ' + recipientEmail, 'success');
         } else {
             throw new Error(result.message || 'Failed to send email');
         }
 
     } catch (error) {
         console.error('Email error:', error);
-        alert('Error sending email: ' + error.message);
+        showToast('Error sending email: ' + error.message, 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
