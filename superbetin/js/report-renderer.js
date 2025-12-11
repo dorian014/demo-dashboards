@@ -774,7 +774,7 @@ async function sendReport() {
                 pdfBase64: pdfBase64,
                 reportDate: today,
                 clientName: 'Superbetin',
-                reportType: 'Influencer Report'
+                reportType: 'Micro-influencer Report'
             })
         });
 
