@@ -17,15 +17,6 @@ const CLIENT_CONFIG = {
     // Email service (Google Apps Script)
     emailServiceUrl: 'https://script.google.com/macros/s/AKfycbxSBXq-GHv96B0A5EwRZ82xtd9HyttJ1ve4KWc3guyW6knV-JDudEQYgb9azOjTlKQi/exec',
 
-    // GitHub Actions for data refresh
-    github: {
-        owner: 'dorian014',
-        repo: 'demo-dashboards',
-        workflow: 'fetch-superbetin.yml',
-        token: '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',
-        cooldownMinutes: 5
-    },
-
     // Theme colors (optional - can also use CSS variables in theme.css)
     theme: {
         primaryColor: '#2563eb',
