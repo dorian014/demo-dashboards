@@ -30,7 +30,7 @@ jobs:
 
       - name: 📦 Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install gspread google-auth
 
       - name: 📊 Fetch Superbetin data
         env:
