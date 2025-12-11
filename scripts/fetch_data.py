@@ -114,32 +114,15 @@ def fetch_data(client, sheet_id, platform):
         raise
 
 
-def filter_example_rows(records):
+def skip_first_row(records):
     """
-    Filter out example/test rows from the data.
+    Skip the first data row (row 2 in sheet) which is a static example.
     """
-    if not records:
+    if not records or len(records) == 0:
         return records
 
-    # Patterns that indicate example/test data
-    example_patterns = ['id123', 'example', 'test', 'sample']
-
-    filtered = []
-    removed = 0
-    for record in records:
-        post_id = str(record.get('Post ID', '')).lower()
-        account = str(record.get('Account Name', record.get('Agent Name', ''))).lower()
-
-        is_example = any(pattern in post_id or pattern in account for pattern in example_patterns)
-        if not is_example:
-            filtered.append(record)
-        else:
-            removed += 1
-
-    if removed > 0:
-        print(f"  Filtered out {removed} example/test rows")
-
-    return filtered
+    print(f"  Skipping first row (example row)")
+    return records[1:]  # Skip first row, return rest
 
 
 def deduplicate_by_post_id(records):
@@ -207,9 +190,9 @@ def main():
         print(f"\nFetching {platform} data...")
         records = fetch_data(client, sheet_id, platform)
 
-        # Filter out example rows (Facebook only)
+        # Skip first row (static example) for Facebook only
         if platform == 'facebook':
-            records = filter_example_rows(records)
+            records = skip_first_row(records)
 
         # Deduplicate by Post ID, keeping highest Impressions/Views
         records = deduplicate_by_post_id(records)
