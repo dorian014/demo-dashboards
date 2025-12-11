@@ -274,6 +274,9 @@ function renderCharts(chartData) {
     const chartOptions = {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+            padding: { top: 20 }
+        },
         plugins: {
             legend: { display: false },
             datalabels: {
@@ -291,6 +294,7 @@ function renderCharts(chartData) {
             },
             y: {
                 beginAtZero: true,
+                grace: '15%',
                 grid: { color: '#f1f5f9' },
                 ticks: { font: { size: 10 } }
             }
