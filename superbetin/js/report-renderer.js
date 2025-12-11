@@ -534,8 +534,8 @@ async function downloadPDF() {
         const textColor = [30, 41, 59];
         const lightGray = [100, 116, 139];
 
-        // Header - light gray background with blue accent
-        doc.setFillColor(248, 250, 252);
+        // Header - white background with blue accent
+        doc.setFillColor(255, 255, 255);
         doc.rect(0, 0, pageWidth, 35, 'F');
         doc.setFillColor(...primaryColor);
         doc.rect(0, 35, pageWidth, 1.5, 'F');
@@ -635,11 +635,11 @@ async function downloadPDF() {
             doc.text(agentText.substring(0, 40), margin + 18, y + 7);
 
             // Post ID
-            doc.setTextColor(...lightGray);
+            doc.setTextColor(...primaryColor);
             doc.setFontSize(7);
             doc.setFont('helvetica', 'normal');
             const postId = String(post['Post ID'] || 'No ID');
-            doc.text(`ID: ${postId.substring(0, 50)}`, margin + 18, y + 13);
+            doc.text(postId.substring(0, 60), margin + 18, y + 13);
 
             // Impressions
             doc.setTextColor(...primaryColor);
