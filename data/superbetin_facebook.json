@@ -1,5 +1,5 @@
 {
-  "generated": "2025-12-11 12:43:24",
+  "generated": "2025-12-11 12:51:28",
   "platform": "facebook",
   "sheet_id": "1CQwuMGNzc2eOAu9nvdKLvJXplnPcPkZ3XlS8XgpzBoY",
   "worksheet": "raw_data",
@@ -13,7 +13,8 @@
       "Impressions/Views": 10000,
       "Likes": 100,
       "Shares/Retweets": 2,
-      "Comments/Replies": 25
+      "Comments/Replies": 25,
+      "Post URL": "https://www.facebook.com/id123545"
     }
   ]
 }
