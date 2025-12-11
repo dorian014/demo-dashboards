@@ -66,8 +66,9 @@ function filterDataByRange(allData, range) {
     }
 
     return allData.filter(item => {
-        // Only include videos
-        const isVideo = item['Is Video'] === 'Yes' || item['Media Type'] === 'VIDEO';
+        // Only include videos (check Media Type since not all sheets have Is Video)
+        const mediaType = (item['Media Type'] || '').toUpperCase();
+        const isVideo = item['Is Video'] === 'Yes' || mediaType === 'VIDEO' || mediaType === 'REEL';
         if (!isVideo) return false;
 
         // Apply date filter if set
@@ -219,7 +220,7 @@ function renderReport(data) {
                         <div class="top-post-item">
                             <div class="top-post-rank">${index + 1}</div>
                             <div class="top-post-info">
-                                <div class="top-post-agent">${escapeHtml(post['Agent Name'] || 'Unknown')} · ${escapeHtml(post['Platform'] || '-')}</div>
+                                <div class="top-post-agent">${escapeHtml(post['Agent Name'] || post['Account Name'] || 'Unknown')} · ${escapeHtml(post['Platform'] || '-')}</div>
                                 <a href="${escapeHtml(post['Post ID'] || '#')}" target="_blank" class="top-post-link">${escapeHtml(post['Post ID'] || 'No link')}</a>
                             </div>
                             <div class="top-post-metrics">
