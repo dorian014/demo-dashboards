@@ -275,7 +275,14 @@ function renderCharts(chartData) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: { display: false }
+            legend: { display: false },
+            datalabels: {
+                anchor: 'end',
+                align: 'top',
+                color: '#1e293b',
+                font: { size: 10, weight: 'bold' },
+                formatter: (value) => value > 0 ? formatNumber(value) : ''
+            }
         },
         scales: {
             x: {
@@ -289,6 +296,9 @@ function renderCharts(chartData) {
             }
         }
     };
+
+    // Register datalabels plugin
+    Chart.register(ChartDataLabels);
 
     // Posts Chart
     const postsCtx = document.getElementById('postsChart');
@@ -311,17 +321,13 @@ function renderCharts(chartData) {
     const impressionsCtx = document.getElementById('impressionsChart');
     if (impressionsCtx) {
         impressionsChart = new Chart(impressionsCtx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: chartData.labels,
                 datasets: [{
                     data: chartData.impressions,
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                    fill: true,
-                    tension: 0.3,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#2563eb'
+                    backgroundColor: '#2563eb',
+                    borderRadius: 4
                 }]
             },
             options: chartOptions
@@ -558,25 +564,28 @@ async function downloadPDF() {
 
         let y = 47;
 
-        // Summary
+        // Get data and apply current filter
         const instagramData = reportData.platforms?.instagram?.data || [];
         const facebookData = reportData.platforms?.facebook?.data || [];
         const allData = [...instagramData, ...facebookData];
+        const filteredData = filterDataByRange(allData, currentFilter);
 
-        const totalPosts = allData.length;
-        const totalImpressions = sumField(allData, 'Impressions/Views');
+        const totalPosts = filteredData.length;
+        const totalImpressions = sumField(filteredData, 'Impressions/Views');
+
+        const filterLabels = { '7days': 'Past 7 Days', 'month': 'This Month', 'all': 'All Time' };
 
         // Summary boxes - just Posts and Impressions
         const stats = [
-            { label: 'Total Posts', value: totalPosts, sub: `Instagram/X: ${instagramData.length} | Facebook: ${facebookData.length}` },
-            { label: 'Total Impressions', value: totalImpressions, sub: `Instagram/X: ${formatNumber(sumField(instagramData, 'Impressions/Views'))} | Facebook: ${formatNumber(sumField(facebookData, 'Impressions/Views'))}` }
+            { label: 'Total Posts', value: totalPosts },
+            { label: 'Total Impressions', value: totalImpressions }
         ];
 
         const boxW = (pageWidth - margin * 2 - 10) / 2;
         stats.forEach((s, i) => {
             const x = margin + (boxW + 10) * i;
             doc.setFillColor(248, 250, 252);
-            doc.roundedRect(x, y, boxW, 28, 2, 2, 'F');
+            doc.roundedRect(x, y, boxW, 22, 2, 2, 'F');
             doc.setFontSize(8);
             doc.setTextColor(...lightGray);
             doc.text(s.label, x + 8, y + 8);
@@ -584,13 +593,16 @@ async function downloadPDF() {
             doc.setTextColor(...primaryColor);
             doc.setFont('helvetica', 'bold');
             doc.text(formatNumber(s.value), x + 8, y + 18);
-            doc.setFontSize(7);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(...lightGray);
-            doc.text(s.sub, x + 8, y + 24);
         });
 
-        y += 40;
+        y += 32;
+
+        // Show filter period
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...lightGray);
+        doc.text(`Period: ${filterLabels[currentFilter]}`, margin, y);
+        y += 10;
 
         // Top 5 Posts Section
         doc.setFontSize(12);
@@ -604,8 +616,8 @@ async function downloadPDF() {
 
         y += 10;
 
-        // Get top 5 posts
-        const top5Posts = [...allData]
+        // Get top 5 posts from filtered data
+        const top5Posts = [...filteredData]
             .sort((a, b) => parseNumber(b['Impressions/Views']) - parseNumber(a['Impressions/Views']))
             .slice(0, 5);
 
