@@ -5,9 +5,8 @@ let reportData = null;
 
 // Email configuration
 const EMAIL_CONFIG = {
-    // Replace with your Google Apps Script Web App URL after deployment
-    googleAppsScriptUrl: '', // TODO: Add your deployed URL here
-    defaultRecipient: '' // Optional: default email recipient
+    googleAppsScriptUrl: 'https://script.google.com/macros/s/AKfycbxSBXq-GHv96B0A5EwRZ82xtd9HyttJ1ve4KWc3guyW6knV-JDudEQYgb9azOjTlKQi/exec',
+    defaultRecipient: ''
 };
 
 // Initialize on page load
@@ -774,9 +773,8 @@ async function sendReport() {
                 recipientEmail: recipientEmail,
                 pdfBase64: pdfBase64,
                 reportDate: today,
-                filterRange: filterLabels[currentFilter] || 'All Time',
-                totalPosts: formatNumber(totalPosts),
-                totalImpressions: formatNumber(totalImpressions)
+                clientName: 'Superbetin',
+                reportType: 'Influencer Report'
             })
         });
 
