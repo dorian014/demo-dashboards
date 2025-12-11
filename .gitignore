@@ -12,3 +12,14 @@ Thumbs.db
 # Local
 .env
 .env.local
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Service account keys (never commit these!)
+*.json
+!data/*.json
+!package.json
