@@ -398,8 +398,37 @@ const GITHUB_CONFIG = {
     owner: 'dorian014',
     repo: 'demo-dashboards',
     workflow: 'fetch-superbetin.yml',
-    token: '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'
+    token: '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',
+    cooldownMinutes: 5  // Minimum minutes between refreshes
 };
+
+/**
+ * Check if refresh is allowed (rate limiting)
+ */
+function canRefresh() {
+    const lastRefresh = localStorage.getItem('lastRefreshTime');
+    if (!lastRefresh) return { allowed: true };
+
+    const elapsed = Date.now() - parseInt(lastRefresh);
+    const cooldownMs = GITHUB_CONFIG.cooldownMinutes * 60 * 1000;
+
+    if (elapsed < cooldownMs) {
+        const remainingMs = cooldownMs - elapsed;
+        const remainingMins = Math.ceil(remainingMs / 60000);
+        return {
+            allowed: false,
+            remainingMinutes: remainingMins
+        };
+    }
+    return { allowed: true };
+}
+
+/**
+ * Record refresh timestamp
+ */
+function recordRefresh() {
+    localStorage.setItem('lastRefreshTime', Date.now().toString());
+}
 
 /**
  * Trigger GitHub Action workflow
@@ -429,6 +458,14 @@ async function triggerGitHubAction() {
  */
 async function refreshData() {
     const btn = document.getElementById('refreshBtn');
+
+    // Check rate limit
+    const refreshCheck = canRefresh();
+    if (!refreshCheck.allowed) {
+        alert(`Please wait ${refreshCheck.remainingMinutes} more minute(s) before refreshing again.`);
+        return;
+    }
+
     btn.disabled = true;
 
     const paper = document.getElementById('reportPaper');
@@ -442,6 +479,9 @@ async function refreshData() {
     `;
 
     try {
+        // Record this refresh attempt
+        recordRefresh();
+
         await triggerGitHubAction();
 
         paper.innerHTML = `
