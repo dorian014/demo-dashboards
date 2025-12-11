@@ -221,7 +221,7 @@ function renderReport(data) {
                             <div class="top-post-rank">${index + 1}</div>
                             <div class="top-post-info">
                                 <div class="top-post-agent">${escapeHtml(post['Agent Name'] || post['Account Name'] || 'Unknown')} · ${escapeHtml(post['Platform'] || '-')}</div>
-                                <a href="${escapeHtml(post['Post ID'] || '#')}" target="_blank" class="top-post-link">${escapeHtml(post['Post ID'] || 'No link')}</a>
+                                <a href="${getPostUrl(post['Post ID'])}" target="_blank" class="top-post-link">${escapeHtml(post['Post ID'] || 'No link')}</a>
                             </div>
                             <div class="top-post-metrics">
                                 <div class="top-post-impressions">${formatNumber(post['Impressions/Views'])}</div>
@@ -518,7 +518,7 @@ async function refreshData() {
 }
 
 /**
- * Download PDF - captures the report as it appears on screen
+ * Download PDF - captures the report as it appears on screen with clickable links
  */
 async function downloadPDF() {
     const btn = document.getElementById('downloadBtn');
@@ -548,6 +548,9 @@ async function downloadPDF() {
         const imgWidth = pageWidth;
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
+        // Scale factor from paper pixels to PDF mm
+        const scale = imgWidth / paper.offsetWidth;
+
         let heightLeft = imgHeight;
         let position = 0;
 
@@ -562,6 +565,25 @@ async function downloadPDF() {
             pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
         }
+
+        // Add clickable links for top posts
+        pdf.setPage(1);
+        const linkElements = paper.querySelectorAll('.top-post-link');
+        linkElements.forEach((link) => {
+            const rect = link.getBoundingClientRect();
+            const paperRect = paper.getBoundingClientRect();
+
+            // Calculate position relative to paper
+            const x = (rect.left - paperRect.left) * scale;
+            const y = (rect.top - paperRect.top) * scale;
+            const w = rect.width * scale;
+            const h = rect.height * scale;
+
+            const url = link.href;
+            if (url && url !== '#' && url.startsWith('http')) {
+                pdf.link(x, y, w, h, { url: url });
+            }
+        });
 
         const today = new Date();
         pdf.save(`Superbetin_Report_${today.toISOString().split('T')[0]}.pdf`);
@@ -580,6 +602,26 @@ async function downloadPDF() {
 }
 
 // Helpers
+function getPostUrl(postId) {
+    if (!postId) return '#';
+    const id = String(postId);
+
+    // If it's already a full URL
+    if (id.startsWith('http://') || id.startsWith('https://')) {
+        return id;
+    }
+    // If it starts with www, add https
+    if (id.startsWith('www.')) {
+        return 'https://' + id;
+    }
+    // If it contains a domain, add https
+    if (id.includes('facebook.com') || id.includes('instagram.com') || id.includes('twitter.com') || id.includes('x.com')) {
+        return 'https://' + id;
+    }
+    // Otherwise return as-is (numeric IDs won't be clickable)
+    return '#';
+}
+
 function parseNumber(val) {
     if (!val) return 0;
     return typeof val === 'string' ? parseInt(val.replace(/,/g, '')) || 0 : val;
