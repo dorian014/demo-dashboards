@@ -56,6 +56,44 @@ def fetch_data(client, sheet_id, platform):
         raise
 
 
+def deduplicate_by_post_id(records):
+    """
+    Deduplicate records by Post ID, keeping the one with highest Impressions/Views.
+    This ensures we get the most up-to-date data for each post.
+    """
+    if not records:
+        return records
+
+    # Group by Post ID, keep record with highest Impressions/Views
+    best_records = {}
+    for record in records:
+        post_id = record.get('Post ID')
+        if not post_id:
+            continue
+
+        # Parse impressions/views as number
+        impressions = record.get('Impressions/Views', 0)
+        if isinstance(impressions, str):
+            impressions = int(impressions.replace(',', '')) if impressions else 0
+
+        # Keep record with highest impressions
+        if post_id not in best_records:
+            best_records[post_id] = (record, impressions)
+        else:
+            _, current_impressions = best_records[post_id]
+            if impressions > current_impressions:
+                best_records[post_id] = (record, impressions)
+
+    # Extract just the records
+    deduplicated = [r for r, _ in best_records.values()]
+
+    duplicates_removed = len(records) - len(deduplicated)
+    if duplicates_removed > 0:
+        print(f"  Removed {duplicates_removed} duplicates (kept highest Impressions/Views)")
+
+    return deduplicated
+
+
 def save_json(data, filename):
     """Save data to JSON file."""
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -82,6 +120,9 @@ def main():
     for platform, sheet_id in SHEETS.items():
         print(f"\nFetching {platform} data...")
         records = fetch_data(client, sheet_id, platform)
+
+        # Deduplicate by Post ID, keeping highest Impressions/Views
+        records = deduplicate_by_post_id(records)
 
         platform_data = {
             'sheet_id': sheet_id,
