@@ -546,44 +546,47 @@ async function downloadPDF() {
         // Use JPEG with 70% quality for smaller file size
         const imgData = canvas.toDataURL('image/jpeg', 0.7);
 
-        // Calculate dimensions
+        // Calculate dimensions to fit on ONE page
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
 
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
 
-        const imgWidth = pageWidth;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        // Calculate aspect ratio and scale to fit on one page
+        const canvasAspect = canvas.width / canvas.height;
+        const pageAspect = pageWidth / pageHeight;
+
+        let imgWidth, imgHeight;
+        if (canvasAspect > pageAspect) {
+            // Content is wider - fit to width
+            imgWidth = pageWidth;
+            imgHeight = pageWidth / canvasAspect;
+        } else {
+            // Content is taller - fit to height
+            imgHeight = pageHeight;
+            imgWidth = pageHeight * canvasAspect;
+        }
+
+        // Center on page
+        const xOffset = (pageWidth - imgWidth) / 2;
+        const yOffset = (pageHeight - imgHeight) / 2;
 
         // Scale factor from paper pixels to PDF mm
         const scale = imgWidth / paper.offsetWidth;
 
-        let heightLeft = imgHeight;
-        let position = 0;
+        // Add image scaled to fit one page
+        pdf.addImage(imgData, 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
 
-        // Add first page
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        // Add additional pages if content is longer than one page
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
-        }
-
-        // Add clickable links for top posts
-        pdf.setPage(1);
+        // Add clickable links for top posts (adjusted for scaling and offset)
         const linkElements = paper.querySelectorAll('.top-post-link');
         linkElements.forEach((link) => {
             const rect = link.getBoundingClientRect();
             const paperRect = paper.getBoundingClientRect();
 
-            // Calculate position relative to paper
-            const x = (rect.left - paperRect.left) * scale;
-            const y = (rect.top - paperRect.top) * scale;
+            // Calculate position relative to paper, then scale and offset
+            const x = xOffset + (rect.left - paperRect.left) * scale;
+            const y = yOffset + (rect.top - paperRect.top) * scale;
             const w = rect.width * scale;
             const h = rect.height * scale;
 
@@ -729,21 +732,24 @@ async function sendReport() {
 
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pageWidth;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        let heightLeft = imgHeight;
-        let position = 0;
+        // Scale to fit on ONE page
+        const canvasAspect = canvas.width / canvas.height;
+        const pageAspect = pageWidth / pageHeight;
 
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        while (heightLeft > 0) {
-            position = heightLeft - imgHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-            heightLeft -= pageHeight;
+        let imgWidth, imgHeight;
+        if (canvasAspect > pageAspect) {
+            imgWidth = pageWidth;
+            imgHeight = pageWidth / canvasAspect;
+        } else {
+            imgHeight = pageHeight;
+            imgWidth = pageHeight * canvasAspect;
         }
+
+        const xOffset = (pageWidth - imgWidth) / 2;
+        const yOffset = (pageHeight - imgHeight) / 2;
+
+        pdf.addImage(imgData, 'JPEG', xOffset, yOffset, imgWidth, imgHeight);
 
         // Convert PDF to base64
         const pdfBase64 = pdf.output('datauristring').split(',')[1];
