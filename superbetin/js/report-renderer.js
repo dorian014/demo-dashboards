@@ -509,166 +509,64 @@ async function refreshData() {
 }
 
 /**
- * Download PDF
+ * Download PDF - captures the report as it appears on screen
  */
 async function downloadPDF() {
     const btn = document.getElementById('downloadBtn');
     btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div><span>Generating...</span>';
 
     try {
-        // Check if data is available
-        if (!reportData || !reportData.platforms) {
-            alert('No data available. Please wait for data to load.');
-            btn.disabled = false;
-            return;
-        }
+        const paper = document.getElementById('reportPaper');
 
+        // Capture the report as an image
+        const canvas = await html2canvas(paper, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        // Calculate dimensions
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const pdf = new jsPDF('p', 'mm', 'a4');
 
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const pageHeight = doc.internal.pageSize.getHeight();
-        const margin = 15;
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
 
-        const primaryColor = [37, 99, 235];
-        const textColor = [30, 41, 59];
-        const lightGray = [100, 116, 139];
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // Header - white background with blue accent
-        doc.setFillColor(255, 255, 255);
-        doc.rect(0, 0, pageWidth, 35, 'F');
-        doc.setFillColor(...primaryColor);
-        doc.rect(0, 35, pageWidth, 1.5, 'F');
+        let heightLeft = imgHeight;
+        let position = 0;
 
-        doc.setTextColor(...textColor);
-        doc.setFontSize(20);
-        doc.setFont('helvetica', 'bold');
-        doc.text('SUPERBETIN', margin, 18);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...primaryColor);
-        doc.text('Influencer Performance Report', margin, 26);
+        // Add first page
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+
+        // Add additional pages if content is longer than one page
+        while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            heightLeft -= pageHeight;
+        }
 
         const today = new Date();
-        doc.setTextColor(...lightGray);
-        doc.text(today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), pageWidth - margin, 22, { align: 'right' });
+        pdf.save(`Superbetin_Report_${today.toISOString().split('T')[0]}.pdf`);
 
-        let y = 47;
-
-        // Get data and apply current filter
-        const instagramData = reportData.platforms?.instagram?.data || [];
-        const facebookData = reportData.platforms?.facebook?.data || [];
-        const allData = [...instagramData, ...facebookData];
-        const filteredData = filterDataByRange(allData, currentFilter);
-
-        const totalPosts = filteredData.length;
-        const totalImpressions = sumField(filteredData, 'Impressions/Views');
-
-        const filterLabels = { '7days': 'Past 7 Days', 'month': 'This Month', 'all': 'All Time' };
-
-        // Summary boxes - just Posts and Impressions
-        const stats = [
-            { label: 'Total Posts', value: totalPosts },
-            { label: 'Total Impressions', value: totalImpressions }
-        ];
-
-        const boxW = (pageWidth - margin * 2 - 10) / 2;
-        stats.forEach((s, i) => {
-            const x = margin + (boxW + 10) * i;
-            doc.setFillColor(248, 250, 252);
-            doc.roundedRect(x, y, boxW, 22, 2, 2, 'F');
-            doc.setFontSize(8);
-            doc.setTextColor(...lightGray);
-            doc.text(s.label, x + 8, y + 8);
-            doc.setFontSize(18);
-            doc.setTextColor(...primaryColor);
-            doc.setFont('helvetica', 'bold');
-            doc.text(formatNumber(s.value), x + 8, y + 18);
-        });
-
-        y += 32;
-
-        // Show filter period
-        doc.setFontSize(9);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(...lightGray);
-        doc.text(`Period: ${filterLabels[currentFilter]}`, margin, y);
-        y += 10;
-
-        // Top 5 Posts Section
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...primaryColor);
-        doc.text('Top 5 Posts by Impressions', margin, y);
-
-        // Blue underline
-        doc.setFillColor(...primaryColor);
-        doc.rect(margin, y + 2, 60, 0.5, 'F');
-
-        y += 10;
-
-        // Get top 5 posts from filtered data
-        const top5Posts = [...filteredData]
-            .sort((a, b) => parseNumber(b['Impressions/Views']) - parseNumber(a['Impressions/Views']))
-            .slice(0, 5);
-
-        top5Posts.forEach((post, idx) => {
-            if (y > pageHeight - 30) { doc.addPage(); y = 20; }
-
-            // Background
-            doc.setFillColor(248, 250, 252);
-            doc.roundedRect(margin, y, pageWidth - margin * 2, 18, 2, 2, 'F');
-
-            // Rank circle
-            doc.setFillColor(...primaryColor);
-            doc.circle(margin + 8, y + 9, 5, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'bold');
-            doc.text(String(idx + 1), margin + 8, y + 11, { align: 'center' });
-
-            // Agent name and platform
-            doc.setTextColor(...textColor);
-            doc.setFontSize(9);
-            doc.setFont('helvetica', 'bold');
-            const agentText = `${post['Agent Name'] || 'Unknown'} · ${post['Platform'] || '-'}`;
-            doc.text(agentText.substring(0, 40), margin + 18, y + 7);
-
-            // Post ID
-            doc.setTextColor(...primaryColor);
-            doc.setFontSize(7);
-            doc.setFont('helvetica', 'normal');
-            const postId = String(post['Post ID'] || 'No ID');
-            doc.text(postId.substring(0, 60), margin + 18, y + 13);
-
-            // Impressions
-            doc.setTextColor(...primaryColor);
-            doc.setFontSize(12);
-            doc.setFont('helvetica', 'bold');
-            doc.text(formatNumber(post['Impressions/Views']), pageWidth - margin - 5, y + 9, { align: 'right' });
-            doc.setFontSize(6);
-            doc.setTextColor(...lightGray);
-            doc.setFont('helvetica', 'normal');
-            doc.text('IMPRESSIONS', pageWidth - margin - 5, y + 14, { align: 'right' });
-
-            y += 22;
-        });
-
-        // Footer
-        const pages = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pages; i++) {
-            doc.setPage(i);
-            doc.setFontSize(7);
-            doc.setTextColor(...lightGray);
-            doc.text(`Generated by QStarLabs | Page ${i}/${pages}`, pageWidth/2, pageHeight - 8, { align: 'center' });
-        }
-
-        doc.save(`Superbetin_Report_${today.toISOString().split('T')[0]}.pdf`);
     } catch (error) {
         console.error('PDF generation error:', error);
         alert('Error generating PDF: ' + error.message);
     } finally {
         btn.disabled = false;
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg><span>Download PDF</span>`;
     }
 }
 
