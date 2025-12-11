@@ -241,7 +241,7 @@ body {
 }
 
 /* Buttons */
-.refresh-btn, .logout-btn {
+.refresh-btn, .logout-btn, .export-btn {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
@@ -251,6 +251,22 @@ body {
     font-weight: 500;
     cursor: pointer;
     transition: all var(--transition-base);
+}
+
+.export-btn {
+    background: var(--accent-primary);
+    border: 1px solid var(--accent-primary);
+    color: white;
+}
+
+.export-btn:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+.export-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .refresh-btn {
@@ -479,7 +495,8 @@ body {
     }
 
     .refresh-btn span,
-    .logout-btn span {
+    .logout-btn span,
+    .export-btn span {
         display: none;
     }
 }

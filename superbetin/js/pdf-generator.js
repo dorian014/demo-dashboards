@@ -1,0 +1,240 @@
+// Superbetin Dashboard - PDF Generator
+// Generates PDF reports using jsPDF and html2canvas
+
+/**
+ * Export dashboard to PDF
+ */
+async function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+
+    // Show loading state
+    const exportBtn = document.querySelector('.export-btn');
+    const originalText = exportBtn.querySelector('span').textContent;
+    exportBtn.querySelector('span').textContent = 'Generating...';
+    exportBtn.disabled = true;
+
+    try {
+        // Create new PDF document (A4 landscape for dashboard)
+        const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 15;
+
+        // Colors (matching Superbetin brand)
+        const primaryColor = [37, 99, 235];    // #2563eb
+        const accentColor = [0, 217, 196];     // #00d9c4
+        const textColor = [30, 41, 59];        // #1e293b
+        const lightGray = [100, 116, 139];     // #64748b
+
+        // ============ HEADER ============
+        // Logo placeholder (you can add actual logo using addImage)
+        doc.setFillColor(...primaryColor);
+        doc.rect(margin, margin, 40, 12, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('SUPERBETIN', margin + 3, margin + 8);
+
+        // Report title
+        doc.setTextColor(...textColor);
+        doc.setFontSize(20);
+        doc.text('Performance Analytics Report', margin + 50, margin + 8);
+
+        // Date
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        doc.setFontSize(10);
+        doc.setTextColor(...lightGray);
+        doc.text(dateStr, pageWidth - margin, margin + 8, { align: 'right' });
+
+        // Separator line
+        doc.setDrawColor(...primaryColor);
+        doc.setLineWidth(0.5);
+        doc.line(margin, margin + 18, pageWidth - margin, margin + 18);
+
+        // ============ STATS CARDS ============
+        const statsY = margin + 28;
+        const cardWidth = (pageWidth - margin * 2 - 20) / 3;
+        const cardHeight = 25;
+
+        // Get stats from DOM
+        const statCards = document.querySelectorAll('.stat-card');
+        const stats = [];
+        statCards.forEach(card => {
+            const label = card.querySelector('.stat-label')?.textContent || '';
+            const value = card.querySelector('.stat-value')?.textContent || '';
+            stats.push({ label, value });
+        });
+
+        // Draw stat cards
+        stats.forEach((stat, index) => {
+            const x = margin + (cardWidth + 10) * index;
+
+            // Card background
+            doc.setFillColor(248, 250, 252);
+            doc.roundedRect(x, statsY, cardWidth, cardHeight, 3, 3, 'F');
+
+            // Card border
+            doc.setDrawColor(...primaryColor);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(x, statsY, cardWidth, cardHeight, 3, 3, 'S');
+
+            // Label
+            doc.setFontSize(9);
+            doc.setTextColor(...lightGray);
+            doc.setFont('helvetica', 'normal');
+            doc.text(stat.label, x + cardWidth / 2, statsY + 8, { align: 'center' });
+
+            // Value
+            doc.setFontSize(18);
+            doc.setTextColor(...primaryColor);
+            doc.setFont('helvetica', 'bold');
+            doc.text(stat.value, x + cardWidth / 2, statsY + 19, { align: 'center' });
+        });
+
+        // ============ CHART ============
+        const chartY = statsY + cardHeight + 15;
+        const chartHeight = pageHeight - chartY - margin - 20;
+
+        // Capture chart as image
+        const chartCanvas = document.getElementById('timelineChart');
+        if (chartCanvas) {
+            const chartImage = chartCanvas.toDataURL('image/png', 1.0);
+
+            // Chart container
+            doc.setFillColor(255, 255, 255);
+            doc.roundedRect(margin, chartY, pageWidth - margin * 2, chartHeight, 3, 3, 'F');
+            doc.setDrawColor(226, 232, 240);
+            doc.roundedRect(margin, chartY, pageWidth - margin * 2, chartHeight, 3, 3, 'S');
+
+            // Chart title
+            doc.setFontSize(12);
+            doc.setTextColor(...textColor);
+            doc.setFont('helvetica', 'bold');
+            doc.text('PERFORMANCE TIMELINE', margin + 5, chartY + 10);
+
+            // Add chart image
+            const imgWidth = pageWidth - margin * 2 - 10;
+            const imgHeight = chartHeight - 20;
+            doc.addImage(chartImage, 'PNG', margin + 5, chartY + 15, imgWidth, imgHeight);
+        }
+
+        // ============ FOOTER ============
+        doc.setFontSize(8);
+        doc.setTextColor(...lightGray);
+        doc.text(
+            'Generated by QStarLabs Dashboard',
+            pageWidth / 2,
+            pageHeight - 8,
+            { align: 'center' }
+        );
+
+        // ============ SAVE PDF ============
+        const filename = `Superbetin_Report_${today.toISOString().split('T')[0]}.pdf`;
+        doc.save(filename);
+
+        console.log('PDF exported:', filename);
+
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('Error generating PDF. Please try again.');
+    } finally {
+        // Restore button state
+        exportBtn.querySelector('span').textContent = originalText;
+        exportBtn.disabled = false;
+    }
+}
+
+/**
+ * Generate detailed PDF with platform breakdown
+ * @param {string} platform - 'facebook', 'instagram', or 'all'
+ */
+async function generateDetailedReport(platform = 'all') {
+    const { jsPDF } = window.jspdf;
+
+    // Load data
+    const data = await DataLoader.loadData();
+
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const margin = 20;
+
+    // Colors
+    const primaryColor = [37, 99, 235];
+    const textColor = [30, 41, 59];
+
+    // Header
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 0, pageWidth, 35, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SUPERBETIN', margin, 20);
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Influencer Metrics Report', margin, 28);
+
+    // Report info
+    let y = 50;
+    doc.setTextColor(...textColor);
+    doc.setFontSize(10);
+    doc.text(`Generated: ${data.generated || new Date().toISOString()}`, margin, y);
+    doc.text(`Platform: ${platform === 'all' ? 'All Platforms' : platform}`, margin, y + 6);
+
+    y += 20;
+
+    // Platform sections
+    const platforms = platform === 'all'
+        ? Object.keys(data.platforms || {})
+        : [platform];
+
+    platforms.forEach(p => {
+        const platformData = data.platforms?.[p];
+        if (!platformData) return;
+
+        // Platform header
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...primaryColor);
+        doc.text(platformData.worksheet || p.toUpperCase(), margin, y);
+
+        doc.setFontSize(10);
+        doc.setTextColor(...textColor);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Records: ${platformData.count || 0}`, margin, y + 8);
+
+        y += 20;
+
+        // Add data table if records exist
+        if (platformData.data && platformData.data.length > 0) {
+            // Table headers would go here
+            // For now, just show count
+            doc.text(`Data rows: ${platformData.data.length}`, margin, y);
+            y += 15;
+        }
+    });
+
+    // Save
+    const filename = `Superbetin_Detailed_${platform}_${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(filename);
+}
+
+// Export for use
+window.exportToPDF = exportToPDF;
+window.generateDetailedReport = generateDetailedReport;

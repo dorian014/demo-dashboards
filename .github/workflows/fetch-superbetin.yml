@@ -1,0 +1,56 @@
+name: 📊 Fetch Superbetin Data
+run-name: ${{ github.event_name == 'workflow_dispatch' && '🔄 Manual data fetch' || '📊 Scheduled data fetch' }}
+
+on:
+  # Run daily at 1 AM CET (0:00 UTC)
+  schedule:
+    - cron: '0 0 * * *'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-data:
+    name: ${{ github.event_name == 'workflow_dispatch' && '🔄 Manual fetch' || '📊 Scheduled fetch' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: 📊 Fetch Superbetin data
+        env:
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+        run: |
+          python scripts/fetch_data.py
+
+      - name: 💾 Commit and push data
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # Add generated data files
+          git add data/*.json || echo "No data files to add"
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "✅ No changes to commit"
+          else
+            git commit -m "📊 Update Superbetin data - $(date +'%Y-%m-%d %H:%M')"
+            git push
+            echo "✅ Superbetin data updated"
+          fi
