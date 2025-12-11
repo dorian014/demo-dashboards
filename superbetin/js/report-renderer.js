@@ -50,7 +50,7 @@ function getDateKey(date) {
 }
 
 /**
- * Filter data by time range
+ * Filter data by time range (only videos)
  */
 function filterDataByRange(allData, range) {
     const now = new Date();
@@ -62,12 +62,20 @@ function filterDataByRange(allData, range) {
     } else if (range === 'month') {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     } else {
-        return allData; // 'all' - no filter
+        startDate = null; // 'all' - no date filter
     }
 
     return allData.filter(item => {
-        const itemDate = parseDate(item['Created At']);
-        return itemDate && itemDate >= startDate;
+        // Only include videos
+        const isVideo = item['Is Video'] === 'Yes' || item['Media Type'] === 'VIDEO';
+        if (!isVideo) return false;
+
+        // Apply date filter if set
+        if (startDate) {
+            const itemDate = parseDate(item['Created At']);
+            return itemDate && itemDate >= startDate;
+        }
+        return true;
     });
 }
 
