@@ -1,20 +1,8 @@
 {
-  "generated": "2025-12-11 12:51:28",
+  "generated": "2025-12-11 13:27:25",
   "platform": "facebook",
   "sheet_id": "1CQwuMGNzc2eOAu9nvdKLvJXplnPcPkZ3XlS8XgpzBoY",
   "worksheet": "raw_data",
-  "count": 1,
-  "data": [
-    {
-      "Account Name": "Turkish futbol fans",
-      "Post ID": "www.facebook.com/id123545",
-      "Created At": "12/05/2025",
-      "Media Type": "VIDEO",
-      "Impressions/Views": 10000,
-      "Likes": 100,
-      "Shares/Retweets": 2,
-      "Comments/Replies": 25,
-      "Post URL": "https://www.facebook.com/id123545"
-    }
-  ]
+  "count": 0,
+  "data": []
 }
