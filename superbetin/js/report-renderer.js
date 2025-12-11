@@ -686,27 +686,43 @@ function escapeHtml(str) {
 }
 
 /**
- * Send report via email
+ * Open email modal
  */
-async function sendReport() {
+function sendReport() {
     // Check if email service is configured
     if (!EMAIL_CONFIG.googleAppsScriptUrl) {
         alert('Email service not configured. Please set up Google Apps Script first.\nSee superbetin/google-apps-script.md for instructions.');
         return;
     }
 
-    // Prompt for email address
-    const recipientEmail = prompt('Enter recipient email address:', EMAIL_CONFIG.defaultRecipient);
-    if (!recipientEmail) {
-        return; // User cancelled
-    }
+    // Show modal
+    document.getElementById('emailModal').classList.add('active');
+    document.getElementById('emailInput').value = EMAIL_CONFIG.defaultRecipient;
+    document.getElementById('emailInput').focus();
+}
+
+/**
+ * Close email modal
+ */
+function closeEmailModal() {
+    document.getElementById('emailModal').classList.remove('active');
+    document.getElementById('emailInput').value = '';
+}
+
+/**
+ * Confirm and send email
+ */
+async function confirmSendEmail() {
+    const recipientEmail = document.getElementById('emailInput').value.trim();
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(recipientEmail)) {
-        alert('Please enter a valid email address.');
+        document.getElementById('emailInput').style.borderColor = '#dc2626';
         return;
     }
+
+    closeEmailModal();
 
     const btn = document.getElementById('sendBtn');
     btn.disabled = true;
@@ -802,3 +818,5 @@ async function sendReport() {
 window.refreshData = refreshData;
 window.downloadPDF = downloadPDF;
 window.sendReport = sendReport;
+window.closeEmailModal = closeEmailModal;
+window.confirmSendEmail = confirmSendEmail;
