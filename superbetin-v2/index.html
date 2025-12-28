@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Superbetin - AI Micro-influencer Report</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Shared Base Styles -->
+    <link rel="stylesheet" href="../shared/css/report-base.css">
+    <!-- Client Theme Overrides (optional) -->
+    <style>
+        :root {
+            /* Superbetin uses default theme colors */
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --background-dark: #1a1a2e;
+        }
+    </style>
+</head>
+<body>
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <img src="assets/logo2.png" alt="Superbetin" class="toolbar-logo">
+            <span class="toolbar-title">AI Micro-influencer Report</span>
+        </div>
+        <div class="toolbar-right">
+            <a href="../index.html" class="btn btn-outline">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5"></path>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Back</span>
+            </a>
+            <button class="btn btn-primary" id="downloadBtn" onclick="downloadPDF()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                <span>Download PDF</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Document Viewer -->
+    <div class="viewer">
+        <div class="paper" id="reportPaper">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading report...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <span class="toast-message" id="toastMessage">Message</span>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+    <!-- Client Config (MUST load first) -->
+    <script src="config.js"></script>
+
+    <!-- Static Data -->
+    <script src="js/static-data.js"></script>
+
+    <!-- Report Core V2 (no top 5 posts) -->
+    <script src="js/report-core-v2.js"></script>
+</body>
+</html>
