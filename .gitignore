@@ -22,4 +22,5 @@ venv/
 # Service account keys (never commit these!)
 *.json
 !data/*.json
+!superbetin-v2/data/*.json
 !package.json
