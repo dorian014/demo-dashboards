@@ -189,6 +189,170 @@ function onFilterChange(value) {
     renderReport(reportData);
 }
 
+// ============ Facebook Editable Table ============
+
+const FB_STORAGE_KEY = 'superbetin_facebook_edits';
+
+function loadFacebookEdits() {
+    try {
+        const saved = localStorage.getItem(FB_STORAGE_KEY);
+        return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+function saveFacebookEdits(edits) {
+    localStorage.setItem(FB_STORAGE_KEY, JSON.stringify(edits));
+}
+
+function groupFacebookByDate(facebookData) {
+    const grouped = {};
+    const edits = loadFacebookEdits();
+
+    // Group existing data by date
+    facebookData.forEach(item => {
+        const itemDate = parseDate(item['Created At']);
+        if (itemDate) {
+            const key = getDateKey(itemDate);
+            if (!grouped[key]) {
+                grouped[key] = { posts: 0, impressions: 0 };
+            }
+            grouped[key].posts++;
+            grouped[key].impressions += parseNumber(item['Impressions/Views']);
+        }
+    });
+
+    // Find date range (from data + edits)
+    const allDates = [...Object.keys(grouped), ...Object.keys(edits)];
+    if (allDates.length === 0) {
+        // No data - show last 30 days with zeros
+        const today = new Date();
+        for (let i = 0; i < 30; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const key = getDateKey(d);
+            grouped[key] = { posts: 0, impressions: 0 };
+        }
+    } else {
+        // Fill in all dates between min and max
+        const sortedDates = allDates.sort();
+        const minDate = new Date(sortedDates[0]);
+        const maxDate = new Date(sortedDates[sortedDates.length - 1]);
+
+        // Extend to yesterday (exclude today)
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (maxDate < yesterday) {
+            maxDate.setTime(yesterday.getTime());
+        }
+
+        const todayKey = getDateKey(today);
+        const current = new Date(minDate);
+        while (current <= maxDate) {
+            const key = getDateKey(current);
+            // Skip today's date
+            if (key !== todayKey && !grouped[key]) {
+                grouped[key] = { posts: 0, impressions: 0 };
+            }
+            current.setDate(current.getDate() + 1);
+        }
+
+        // Remove today if it exists
+        delete grouped[todayKey];
+    }
+
+    // Apply saved edits (skip today)
+    const todayStr = getDateKey(new Date());
+    Object.keys(edits).forEach(date => {
+        if (date === todayStr) return; // Skip today
+        if (!grouped[date]) {
+            grouped[date] = { posts: 0, impressions: 0 };
+        }
+        if (edits[date].posts !== undefined) grouped[date].posts = edits[date].posts;
+        if (edits[date].impressions !== undefined) grouped[date].impressions = edits[date].impressions;
+    });
+
+    // Ensure today is excluded
+    delete grouped[todayStr];
+
+    const sortedKeys = Object.keys(grouped).sort().reverse();
+    return sortedKeys.map(key => ({
+        date: key,
+        ...grouped[key]
+    }));
+}
+
+function onFacebookCellEdit(date, field, value) {
+    const edits = loadFacebookEdits();
+    if (!edits[date]) edits[date] = {};
+    edits[date][field] = parseNumber(value);
+    saveFacebookEdits(edits);
+    showToast('Facebook data saved', 'success');
+
+    // Re-render report to update totals
+    if (reportData) {
+        renderReport(reportData);
+    }
+}
+
+function renderFacebookTable(facebookData) {
+    const dateData = groupFacebookByDate(facebookData);
+
+    if (dateData.length === 0) {
+        return '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No Facebook data</p>';
+    }
+
+    const rows = dateData.map(d => `
+        <tr>
+            <td>${d.date}</td>
+            <td class="number">
+                <span class="editable-cell" contenteditable="true"
+                    onblur="onFacebookCellEdit('${d.date}', 'posts', this.textContent)">${d.posts}</span>
+            </td>
+            <td class="number">
+                <span class="editable-cell" contenteditable="true"
+                    onblur="onFacebookCellEdit('${d.date}', 'impressions', this.textContent)">${d.impressions.toLocaleString()}</span>
+            </td>
+        </tr>
+    `).join('');
+
+    return `
+        <div class="table-wrapper">
+            <table class="editable-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th class="number">Posts</th>
+                        <th class="number">Impressions</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+    `;
+}
+
+function renderFacebookSidebar(facebookData) {
+    let sidebar = document.getElementById('facebookSidebar');
+
+    if (!sidebar) {
+        sidebar = document.createElement('div');
+        sidebar.id = 'facebookSidebar';
+        sidebar.className = 'facebook-sidebar';
+        document.querySelector('.viewer').appendChild(sidebar);
+    }
+
+    sidebar.innerHTML = `
+        <div class="facebook-daily-section">
+            <h3>Facebook Daily Data</h3>
+            ${renderFacebookTable(facebookData)}
+        </div>
+    `;
+}
+
 // ============ Chart Rendering ============
 
 function renderCharts(dateData) {
@@ -287,18 +451,63 @@ function renderCharts(dateData) {
 
 // ============ Report Rendering (No Top 5 Posts) ============
 
+function getFacebookTotals(facebookData) {
+    const fbDateData = groupFacebookByDate(facebookData);
+    return fbDateData.reduce((acc, d) => ({
+        posts: acc.posts + d.posts,
+        impressions: acc.impressions + d.impressions
+    }), { posts: 0, impressions: 0 });
+}
+
+function mergeChartData(instagramData, facebookData) {
+    const merged = {};
+
+    // Add Instagram data
+    instagramData.forEach(d => {
+        merged[d.date] = { posts: d.posts, impressions: d.impressions };
+    });
+
+    // Add Facebook data
+    facebookData.forEach(d => {
+        if (!merged[d.date]) {
+            merged[d.date] = { posts: 0, impressions: 0 };
+        }
+        merged[d.date].posts += d.posts;
+        merged[d.date].impressions += d.impressions;
+    });
+
+    // Sort by date and return as array
+    const sortedKeys = Object.keys(merged).sort();
+    return sortedKeys.map(key => ({
+        date: key,
+        ...merged[key]
+    }));
+}
+
 function renderReport(data) {
     const paper = document.getElementById('reportPaper');
     if (!paper) return;
 
     const instagramData = data.platforms?.instagram?.data || data.instagram?.data || [];
     const facebookData = data.platforms?.facebook?.data || data.facebook?.data || [];
-    const allData = [...instagramData, ...facebookData];
-    const filteredData = filterDataByRange(allData, currentFilter);
-    const dateData = groupByDate(filteredData);
 
-    const totalPosts = filteredData.length;
-    const totalImpressions = sumField(filteredData, 'Impressions/Views');
+    // Instagram data (filtered by range, videos only)
+    const filteredInstagram = filterDataByRange(instagramData, currentFilter);
+    const instagramDateData = groupByDate(filteredInstagram);
+
+    const instagramPosts = filteredInstagram.length;
+    const instagramImpressions = sumField(filteredInstagram, 'Impressions/Views');
+
+    // Facebook data (from editable table - includes edits)
+    const facebookDateData = groupFacebookByDate(facebookData);
+    const fbTotals = getFacebookTotals(facebookData);
+
+    // Merge Instagram + Facebook for charts
+    const dateData = mergeChartData(instagramDateData, facebookDateData);
+
+    // Combined totals
+    const totalPosts = instagramPosts + fbTotals.posts;
+    const totalImpressions = instagramImpressions + fbTotals.impressions;
 
     const dateStr = new Date().toLocaleDateString('en-US', {
         year: 'numeric', month: 'long', day: 'numeric'
@@ -366,6 +575,9 @@ function renderReport(data) {
         </div>
     `;
 
+    // Render Facebook sidebar (outside report paper - not in PDF)
+    renderFacebookSidebar(facebookData);
+
     // Render charts after DOM update
     setTimeout(() => renderCharts(dateData), 0);
 }
@@ -374,3 +586,4 @@ function renderReport(data) {
 
 window.downloadPDF = downloadPDF;
 window.onFilterChange = onFilterChange;
+window.onFacebookCellEdit = onFacebookCellEdit;

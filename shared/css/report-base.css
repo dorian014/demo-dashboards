@@ -598,7 +598,107 @@ body {
     font-weight: 500;
 }
 
+/* Facebook Sidebar (outside report paper) */
+.facebook-sidebar {
+    position: fixed;
+    right: 20px;
+    top: 80px;
+    width: 320px;
+    max-height: calc(100vh - 100px);
+    z-index: 50;
+}
+
+/* Facebook Daily Section */
+.facebook-daily-section {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.facebook-daily-section h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1877f2;
+}
+
+.facebook-daily-section .table-wrapper {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+@media (max-width: 1400px) {
+    .facebook-daily-section .table-wrapper {
+        max-height: 400px;
+    }
+}
+
+/* Editable Table */
+.editable-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+}
+
+.editable-table th {
+    text-align: left;
+    padding: 8px 6px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+}
+
+.editable-table td {
+    padding: 6px;
+    border-bottom: 1px solid var(--card-hover);
+    color: #374151;
+}
+
+.editable-table .editable-cell {
+    cursor: text;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    min-width: 50px;
+    display: inline-block;
+}
+
+.editable-table .editable-cell:hover {
+    background: #e0e7ff;
+}
+
+.editable-table .editable-cell:focus {
+    outline: none;
+    background: #c7d2fe;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.editable-table .number {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
 /* Responsive */
+@media (max-width: 1400px) {
+    .facebook-sidebar {
+        position: static;
+        width: 100%;
+        max-width: 900px;
+        margin: 20px auto;
+        max-height: none;
+    }
+}
+
 @media (max-width: 768px) {
     .stats-row {
         grid-template-columns: repeat(2, 1fr);
