@@ -518,15 +518,12 @@ function renderReport(data) {
         <div class="report-header">
             <div class="report-header-top">
                 <img src="${CLIENT_CONFIG.logo}" alt="${CLIENT_CONFIG.name}" class="report-logo">
-                <div class="report-date">
-                    <div>${dateStr}</div>
-                    <div class="report-filter">
-                        <select onchange="onFilterChange(this.value)">
-                            <option value="7days" ${currentFilter === '7days' ? 'selected' : ''}>Past 7 Days</option>
-                            <option value="month" ${currentFilter === 'month' ? 'selected' : ''}>This Month</option>
-                            <option value="all" ${currentFilter === 'all' ? 'selected' : ''}>All Time</option>
-                        </select>
-                    </div>
+                <div class="report-filter">
+                    <select onchange="onFilterChange(this.value)">
+                        <option value="7days" ${currentFilter === '7days' ? 'selected' : ''}>Past 7 Days</option>
+                        <option value="month" ${currentFilter === 'month' ? 'selected' : ''}>This Month</option>
+                        <option value="all" ${currentFilter === 'all' ? 'selected' : ''}>All Time</option>
+                    </select>
                 </div>
             </div>
             <h1 class="report-title">${CLIENT_CONFIG.reportTitle}</h1>
@@ -569,8 +566,8 @@ function renderReport(data) {
             <div class="report-footer-left">
                 Generated on ${dateStr}
             </div>
-            <div class="report-footer-right">
-                Powered by <img src="${CLIENT_CONFIG.footerLogo}" alt="QStarLabs">
+            <div class="report-footer-disclaimer">
+                Metrics include data from automated tracking systems and manual reporting by Jethouse and affiliated partners.
             </div>
         </div>
     `;
