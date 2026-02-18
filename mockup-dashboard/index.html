@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Clipping Report</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Work+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Shared Base Styles -->
+    <link rel="stylesheet" href="../shared/css/report-base.css">
+    <!-- Client Theme Overrides — Dark Crypto -->
+    <style>
+        /* Global dark theme for outer UI */
+        :root {
+            --primary-color: #f7931a;
+            --primary-hover: #e6b800;
+            --background-dark: #1e1e2a;
+            --text-primary: #e8e8f0;
+            --text-secondary: #9090a8;
+            --text-muted: #5a5a70;
+            --border-color: rgba(247, 147, 26, 0.12);
+            --border-hover: rgba(247, 147, 26, 0.25);
+            --card-bg: #14121f;
+            --card-hover: #1a1830;
+            --success-color: #00e676;
+            --error-color: #ef4444;
+        }
+
+        /* No toolbar — adjust viewer */
+        .viewer {
+            padding-top: 20px;
+        }
+
+        /* Paper — white document on dark background */
+        .paper {
+            background: #ffffff;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Report Header — dark crypto banner */
+        .report-header {
+            background: linear-gradient(135deg, #0d0d14 0%, #12101f 100%);
+            color: #e8e8f0;
+            border-bottom: 3px solid #f7931a;
+        }
+        .report-title { color: #ffffff; }
+        .report-subtitle { color: #f7931a; }
+        .report-date { color: rgba(255, 255, 255, 0.5); }
+        .report-filter select {
+            background: rgba(255, 255, 255, 0.08);
+            color: #e8e8f0;
+            border-color: rgba(247, 147, 26, 0.2);
+        }
+        .report-filter select:focus {
+            border-color: #f7931a;
+        }
+
+        /* Report Body — light for chart readability */
+        .report-body {
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border-color: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --card-bg: #f8fafc;
+            --card-hover: #f1f5f9;
+            color: #1e293b;
+        }
+        .stat-card .stat-value { color: #f7931a; }
+        .platform-header { border-bottom-color: #f7931a; }
+        .platform-header h2 { color: #f7931a; }
+        .top-post-rank { background: #f7931a; }
+        .top-post-link { color: #f7931a; }
+        .top-post-impressions { color: #059669; }
+        .top-posts-section h3 { border-bottom-color: #f7931a; }
+
+        /* Report Footer — dark */
+        .report-footer {
+            background: #0d0d14;
+            border-top: 1px solid rgba(247, 147, 26, 0.1);
+        }
+        .report-footer-left { color: rgba(255, 255, 255, 0.35); }
+        .report-footer-right { color: rgba(255, 255, 255, 0.35); }
+
+        /* Territories */
+        .territories-section {
+            margin-top: 40px;
+        }
+        .territories-section h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f7931a;
+        }
+        .territories-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .territory-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .territory-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100px;
+            flex-shrink: 0;
+        }
+        .territory-flag {
+            font-size: 1.2rem;
+        }
+        .territory-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .territory-bar-track {
+            flex: 1;
+            height: 24px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .territory-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.6s ease;
+        }
+        .territory-pct {
+            width: 40px;
+            text-align: right;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        /* Platform Icons */
+        .platform-icon {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            vertical-align: -3px;
+        }
+
+        /* Top Posts Header */
+        .top-posts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f7931a;
+        }
+        .top-posts-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+        .csv-download-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #f7931a;
+            color: #0a0a12;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .csv-download-btn:hover {
+            background: #e6b800;
+        }
+
+        /* Top Posts Pagination */
+        .top-posts-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .pagination-btn {
+            padding: 6px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #1e293b;
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            border-color: #f7931a;
+            color: #f7931a;
+        }
+        .pagination-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .pagination-info {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Annotations */
+        .viewer { position: relative; }
+
+        .annotations-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .margin-annotation {
+            position: absolute;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+        .annotation-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .annotation-text {
+            font-family: 'Caveat', cursive;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #e53e3e;
+            line-height: 1.3;
+            white-space: nowrap;
+        }
+        .margin-annotation-left .annotation-content {
+            justify-content: flex-end;
+        }
+        .margin-annotation-left .annotation-text {
+            text-align: right;
+        }
+        .annotation-arrow { flex-shrink: 0; }
+
+        .annotations-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Caveat', cursive;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .annotations-toggle:hover {
+            background: #c53030;
+        }
+        .annotations-toggle.off {
+            background: #e53e3e;
+        }
+
+        .annotations-hidden .annotations-layer {
+            display: none;
+        }
+
+        @media (max-width: 1200px) {
+            .annotations-layer { display: none; }
+            .annotations-toggle { display: none; }
+        }
+
+        /* Loading */
+        .loading { color: #9090a8; }
+        .spinner {
+            border-color: rgba(247, 147, 26, 0.15);
+            border-top-color: #f7931a;
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating annotations toggle -->
+    <button class="annotations-toggle" onclick="toggleAnnotations(this)" style="position:fixed;top:16px;right:16px;z-index:200;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        Notes OFF
+    </button>
+
+    <!-- Document Viewer -->
+    <div class="viewer">
+        <div class="paper" id="reportPaper">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading report...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+
+    <!-- Client Config (MUST load first) -->
+    <script src="config.js"></script>
+
+    <!-- Data Loader -->
+    <script src="js/data-loader.js"></script>
+
+    <!-- Shared Report Core -->
+    <script src="../shared/js/report-core.js"></script>
+
+    <!-- Client Overrides -->
+    <script src="js/top-posts-pagination.js"></script>
+    <script src="js/annotations.js"></script>
+</body>
+</html>
